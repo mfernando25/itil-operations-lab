@@ -22,6 +22,10 @@ def test_group3_builds_isolated_divergent_git_repository(isolated_db):
     status = (workspace / "evidence" / "local-state.txt").read_text(encoding="utf-8")
     assert "feature/matricula" in status
 
+    scenarios.reset_scenario(3)
+    assert not scenarios.G3_DIR.exists()
+    assert not database.is_scenario_active(3)
+
 
 def test_group4_generates_five_day_cpu_and_service_history(isolated_db):
     result = scenarios.activate_group4()
