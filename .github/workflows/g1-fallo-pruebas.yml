@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Descargar código
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Configurar Python
         uses: actions/setup-python@v5
         with:
@@ -21,8 +23,9 @@ jobs:
       - name: Registrar commit y archivos modificados
         run: |
           mkdir -p evidence
-          git log -2 --oneline | tee evidence/commit-history.txt
-          git show --stat --oneline HEAD | tee evidence/changed-files.txt
+          git rev-parse --short HEAD | tee evidence/workflow-revision.txt
+          git log -2 --oneline -- scenario_tests/group1/updated_service_logic.py scenario_tests/group1/test_regression.py | tee evidence/commit-history.txt
+          git show --stat --oneline "$(git log -1 --format=%H -- scenario_tests/group1/updated_service_logic.py scenario_tests/group1/test_regression.py)" | tee evidence/changed-files.txt
       - name: Ejecutar prueba de regresión
         shell: bash
         run: |
