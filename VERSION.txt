@@ -1,3 +1,3 @@
 ITIL Operations Lab
 Version: 0.2.2
-Build: balanced evidence, group-scoped view and supervised G7 recovery
+Build: balanced evidence, selected-group view, supervised G7 recovery and HTTP integration tests
