@@ -56,7 +56,7 @@ class LabHandler(BaseHTTPRequestHandler):
             content_type = "text/css; charset=utf-8" if path.endswith(".css") else "application/javascript; charset=utf-8"
             self._send(200, (WEB / path.lstrip("/")).read_bytes(), content_type)
         elif path == "/api/health":
-            self._json(200, {"status": "ok", "service": "ITIL Operations Lab", "version": "0.2.2"})
+            self._json(200, {"status": "ok", "service": "ITIL Operations Lab", "version": "0.2.3"})
         elif path == "/api/metrics":
             result = metrics.current_metrics(public_group=database.get_public_group())
             self._json(200, {
@@ -64,6 +64,11 @@ class LabHandler(BaseHTTPRequestHandler):
                 "history": [_student_metric(row) for row in result["history"]],
                 "storage_current": _student_metric(result["storage_current"]),
                 "storage_history": [_student_metric(row) for row in result["storage_history"]],
+                "cpu_history_label": result["cpu_history_label"],
+                "cpu_source_label": result["cpu_source_label"],
+                "cpu_window_label": result["cpu_window_label"],
+                "storage_history_label": result["storage_history_label"],
+                "storage_window_label": result["storage_window_label"],
             })
         elif path == "/api/events":
             visible_group = database.get_public_group()
@@ -209,7 +214,7 @@ def run_server() -> None:
     monitor.start()
     server = ThreadingHTTPServer((host, port), LabHandler)
     print("=" * 58)
-    print(" ITIL OPERATIONS LAB v0.2.2")
+    print(" ITIL OPERATIONS LAB v0.2.3")
     print(f" Vista de estudiantes: http://{host}:{port}")
     print(f" Panel privado docente: http://{host}:{port}/instructor")
     print(f" Métricas reales del equipo: cada {MONITOR_INTERVAL} segundos")

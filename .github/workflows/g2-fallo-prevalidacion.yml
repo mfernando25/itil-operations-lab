@@ -11,11 +11,15 @@ jobs:
     steps:
       - name: Descargar código
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Registrar cambio reciente
         run: |
           mkdir -p evidence
-          git log -2 --oneline | tee evidence/commit-history.txt
+          git rev-parse --short HEAD | tee evidence/workflow-revision.txt
+          git log -2 --oneline -- .github/workflows/g2-fallo-prevalidacion.yml | tee evidence/commit-history.txt
           git show HEAD:.github/workflows/g2-fallo-prevalidacion.yml > evidence/workflow-config.yml
+          git show --stat --oneline "$(git log -1 --format=%H -- .github/workflows/g2-fallo-prevalidacion.yml)" | tee evidence/changed-files.txt
       - name: Validar configuración del servicio
         shell: bash
         env:
