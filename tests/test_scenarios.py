@@ -1,5 +1,5 @@
 from datetime import datetime
-from lab import database, scenarios, evidence, services
+from lab import database, scenarios, evidence, services, metrics
 
 
 def test_group1_and_group2_create_student_safe_notifications(isolated_db):
@@ -56,6 +56,52 @@ def test_group5_generates_five_day_log_and_backup_growth_without_large_files(iso
     assert all(sum(1 for row in rows if datetime.fromisoformat(row["captured_at"]).date() == day) == 2 for day in days)
     assert evidence.build_bundle(5, 2)["filename"] == "G5_evidencia_2.md"
 
+
+
+def test_g4_dashboard_uses_synthetic_cpu_and_real_host_memory_disk(isolated_db):
+    database.add_metric("real", cpu=21.0, memory=48.0, disk=67.0, storage_mb=12.0)
+    scenarios.activate_group4()
+
+    result = metrics.current_metrics(public_group=4)
+    assert result["current"]["cpu_percent"] == 94.0
+    assert result["current"]["memory_percent"] == 48.0
+    assert result["current"]["disk_percent"] == 67.0
+    assert len(result["history"]) == 10
+    assert all(row["memory_percent"] is None for row in result["history"])
+    assert all(row["disk_percent"] is None for row in result["history"])
+    assert result["history"][-1]["requests_per_minute"] == 1480
+    assert result["history"][-1]["avg_response_ms"] == 2450
+    assert "sintético" in result["cpu_history_label"]
+
+
+def test_g5_dashboard_uses_real_host_resources_and_synthetic_service_storage(isolated_db):
+    database.add_metric("real", cpu=22.0, memory=49.0, disk=68.0, storage_mb=13.0)
+    scenarios.activate_group5()
+
+    result = metrics.current_metrics(public_group=5)
+    assert result["current"]["cpu_percent"] == 22.0
+    assert result["current"]["memory_percent"] == 49.0
+    assert result["current"]["disk_percent"] == 68.0
+    assert len(result["history"]) == 1
+    assert len(result["storage_history"]) == 10
+    assert result["storage_current"]["storage_capacity_gb"] == 10.0
+    assert result["storage_current"]["storage_available_gb"] == 1.3
+    assert "sintético" in result["storage_history_label"]
+
+
+def test_g4_g5_reactivation_and_reset_do_not_accumulate_synthetic_samples(isolated_db):
+    for group, activate in ((4, scenarios.activate_group4), (5, scenarios.activate_group5)):
+        activate()
+        assert len(database.list_metrics(group_number=group)) == 10
+
+        activate()
+        assert len(database.list_metrics(group_number=group)) == 10
+
+        scenarios.reset_scenario(group)
+        assert database.list_metrics(group_number=group) == []
+
+        activate()
+        assert len(database.list_metrics(group_number=group)) == 10
 
 def test_group6_contract_mismatch_is_reproducible(isolated_db):
     assert "student_id" in services.students_service("STU-1042")

@@ -1,4 +1,4 @@
-# ITIL Operations Lab · v0.2.2
+# ITIL Operations Lab · v0.2.3
 
 Laboratorio académico de operaciones TI e ITIL 4 para investigar siete eventos de un portal universitario. La solución genera datos, historiales y evidencias de escenario al momento de activarlos; no necesita esperar cinco días de recolección.
 
@@ -38,9 +38,15 @@ Mantén abierta la ventana de PowerShell durante la sesión. Detén el servidor 
 
 ## Historiales de cinco días: cómo funcionan
 
-G4 y G5 crean sus series históricas al pulsar **Preparar / activar** en el panel docente. Cada grupo genera diez puntos, dos por fecha, distribuidos en cinco fechas consecutivas; la evidencia queda disponible inmediatamente.
+G4 y G5 crean sus series históricas al pulsar **Preparar / activar** en el panel docente. Cada grupo genera exactamente diez puntos, dos por fecha, distribuidos en cinco fechas consecutivas; la evidencia queda disponible inmediatamente.
 
-Esos datos son **historial del caso generado para la actividad**, no registros históricos reales de la laptop. La documentación de la actividad debe indicar que se proporciona un conjunto histórico para analizar la evolución del servicio. Las métricas reales del equipo (CPU, memoria y disco) se siguen registrando aparte, cada 60 segundos por defecto. El panel docente conserva la identificación de la procedencia de los datos.
+Esos datos son **historial del caso generado para la actividad**, no registros históricos reales de la laptop. La separación de fuentes es intencional:
+
+- **G4:** CPU, solicitudes por minuto y latencia utilizan el historial sintético de cinco días. Memoria y disco continúan mostrando las mediciones reales del equipo.
+- **G5:** el almacenamiento del servicio utiliza el historial sintético de cinco días. CPU, memoria y disco continúan mostrando las mediciones reales del equipo.
+- Fuera de G4/G5, los gráficos muestran las mediciones reales disponibles durante la sesión. Los títulos y rótulos identifican la procedencia y la ventana temporal de cada serie.
+
+Al reiniciar G4 o G5 se eliminan las muestras sintéticas de esa ejecución. Una nueva activación también reemplaza cualquier serie previa del mismo grupo, por lo que el dashboard y los paquetes de evidencia contienen exactamente diez muestras y no acumulan duplicados. Las métricas reales del equipo se siguen registrando aparte, cada 60 segundos por defecto.
 
 G5 modela un volumen lógico de 10 GB. Solo se escribe un pequeño archivo descriptivo; no se crean archivos de varios gigabytes ni se llena el disco real.
 
@@ -58,8 +64,10 @@ Cada grupo dispone de una notificación inicial y tres paquetes adicionales. Los
 
 En el panel docente usa el enlace a Actions:
 
-- `G1 - Fallo de pruebas`: ejecuta una prueba de regresión que falla. El workflow guarda logs, resultado JUnit, historial de commits y archivos modificados en el artefacto `G1-evidencia-ejecucion`.
-- `G2 - Fallo de prevalidación`: detiene el flujo antes de instalar dependencias y ejecutar pruebas. Guarda la salida y configuración del workflow en `G2-evidencia-prevalidacion`.
+- `G1 - Fallo de pruebas`: ejecuta una prueba de regresión que falla. El workflow guarda logs, resultado JUnit, revisión ejecutada, historial de commits de los archivos de la prueba y archivos modificados en el artefacto `G1-evidencia-ejecucion`.
+- `G2 - Fallo de prevalidación`: detiene el flujo antes de instalar dependencias y ejecutar pruebas. Guarda la salida, configuración, revisión ejecutada e historial real de cambios del workflow en `G2-evidencia-prevalidacion`.
+
+Las referencias `c82f190` (G6) y `d91b0a7` (G7) son identificadores del sistema académico ficticio, no commits del repositorio GitHub.
 
 Descarga cada artefacto desde la ejecución correspondiente en GitHub Actions. La CI normal de `main` ejecuta la suite del proyecto y debe permanecer aprobada.
 

@@ -21,6 +21,8 @@ function renderEvents(events,visibleGroup){
   events.forEach(ev=>{const item=document.createElement("article");item.className="event-row";const title=document.createElement("strong");title.textContent=ev.title;const desc=document.createElement("p");desc.textContent=ev.description;const meta=document.createElement("div");meta.className="event-meta";[ev.severity,ev.status,ev.created_at].forEach(v=>{const tag=document.createElement("span");tag.className="tag";tag.textContent=v;meta.appendChild(tag);});item.append(title,desc,meta);root.appendChild(item);});
 }
 async function refresh(){try{const data=await request("/api/metrics"),c=data.current||{},s=data.storage_current||{};metric("cpu",c.cpu_percent);metric("memory",c.memory_percent);metric("disk",c.disk_percent);
+  $("cpu-chart-title").textContent=data.cpu_history_label||"CPU del equipo · mediciones reales de la sesión";$("cpu-note").textContent=data.cpu_source_label||"Uso real del procesador del equipo";$("cpu-window").textContent=data.cpu_window_label||"Sesión actual · datos reales";
+  $("storage-chart-title").textContent=data.storage_history_label||"Almacenamiento local del laboratorio · sesión actual";$("storage-window").textContent=data.storage_window_label||"Sesión actual · mediciones reales";
   const used=Number(s.storage_capacity_gb!=null?Number(s.storage_capacity_gb)-Number(s.storage_available_gb):Number(s.storage_used_mb||0)/1024);const capacity=Number(s.storage_capacity_gb||0);
   $("storage-value").textContent=capacity?`${used.toFixed(1)} GB`:`${(Number(s.storage_used_mb||0)/1024).toFixed(2)} GB`;
   $("storage-caption").textContent=capacity?`${Number(s.storage_available_gb).toFixed(1)} GB disponibles de ${capacity.toFixed(1)} GB`:"Uso de archivos locales del laboratorio";

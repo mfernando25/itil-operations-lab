@@ -141,6 +141,8 @@ def activate_group3() -> dict:
 
 
 def activate_group4() -> dict:
+    # Replace the previous case run so every activation contains exactly ten samples.
+    database.delete_scenario_metrics(4)
     # Ten generated samples spanning five calendar days, with correlated workload and latency.
     cpu_values = [38, 42, 47, 53, 59, 66, 72, 81, 89, 94]
     rpm_values = [420, 460, 510, 590, 680, 790, 930, 1110, 1320, 1480]
@@ -157,7 +159,7 @@ def activate_group4() -> dict:
             hour=hour
         ).isoformat(timespec="seconds")
         ids.append(database.add_metric(
-            "scenario", cpu, 54 + index * 1.1, 61, 0,
+            "scenario", cpu, None, None, 0,
             "Historial del caso: carga operativa del portal.", captured,
             requests_per_minute=rpm, avg_response_ms=latency,
             component="enrollment-api", scenario_group=4,
@@ -175,6 +177,8 @@ def activate_group4() -> dict:
 
 
 def activate_group5() -> dict:
+    # Replace the previous case run so every activation contains exactly ten samples.
+    database.delete_scenario_metrics(5)
     # Data describes a 10 GB logical volume. Small placeholder files are created only;
     # no large real files are written to the laptop.
     used_gb = [2.4, 2.6, 3.3, 3.8, 4.6, 5.2, 6.0, 6.8, 7.8, 8.7]
@@ -266,6 +270,8 @@ def reset_scenario(scenario_id: int) -> dict:
     # If Windows still has a handle open, preserve the active state and report the path.
     if scenario_id == 3 and G3_DIR.exists():
         remove_tree(G3_DIR)
+    if scenario_id in {4, 5}:
+        database.delete_scenario_metrics(scenario_id)
     database.set_scenario_state(scenario_id, False)
     if scenario_id == 7:
         database.update_enrollment_current("Pendiente")
