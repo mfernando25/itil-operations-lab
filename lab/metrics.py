@@ -61,19 +61,19 @@ def collect_live_sample() -> dict:
             "disk_percent": round(disk, 1), "storage_used_mb": storage_mb}
 
 
-def current_metrics() -> dict:
+def current_metrics(public_group: int | None = None) -> dict:
     history = database.list_metrics(100, source="real")
     if not history:
         collect_live_sample()
         history = database.list_metrics(100, source="real")
     latest = history[-1] if history else {}
-    if database.is_scenario_active(4):
+    if public_group == 4 and database.is_scenario_active(4):
         cpu_history = database.list_metrics(group_number=4)
         current = cpu_history[-1] if cpu_history else latest
     else:
         cpu_history = history
         current = latest
-    if database.is_scenario_active(5):
+    if public_group == 5 and database.is_scenario_active(5):
         storage_history = database.list_metrics(group_number=5)
         storage_current = storage_history[-1] if storage_history else latest
     else:

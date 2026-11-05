@@ -36,6 +36,16 @@ class LabHandler(BaseHTTPRequestHandler):
     def _json(self, status: int, payload: dict) -> None:
         self._send(status, json.dumps(payload, ensure_ascii=False).encode("utf-8"))
 
+    def _read_json(self) -> dict:
+        length = int(self.headers.get("Content-Length", "0") or 0)
+        if length < 0 or length > 65536:
+            raise ValueError("Solicitud JSON demasiado grande.")
+        raw = self.rfile.read(length) if length else b"{}"
+        payload = json.loads(raw.decode("utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError("El cuerpo debe ser un objeto JSON.")
+        return payload
+
     def do_GET(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
         if path == "/":
@@ -46,9 +56,9 @@ class LabHandler(BaseHTTPRequestHandler):
             content_type = "text/css; charset=utf-8" if path.endswith(".css") else "application/javascript; charset=utf-8"
             self._send(200, (WEB / path.lstrip("/")).read_bytes(), content_type)
         elif path == "/api/health":
-            self._json(200, {"status": "ok", "service": "ITIL Operations Lab", "version": "0.2.0"})
+            self._json(200, {"status": "ok", "service": "ITIL Operations Lab", "version": "0.2.2"})
         elif path == "/api/metrics":
-            result = metrics.current_metrics()
+            result = metrics.current_metrics(public_group=database.get_public_group())
             self._json(200, {
                 "current": _student_metric(result["current"]),
                 "history": [_student_metric(row) for row in result["history"]],
@@ -56,7 +66,13 @@ class LabHandler(BaseHTTPRequestHandler):
                 "storage_history": [_student_metric(row) for row in result["storage_history"]],
             })
         elif path == "/api/events":
-            self._json(200, {"events": database.list_events(60, include_private=False)})
+            visible_group = database.get_public_group()
+            visible_events = (
+                database.list_events(60, include_private=False, group_number=visible_group)
+                if visible_group is not None and database.is_scenario_active(visible_group)
+                else []
+            )
+            self._json(200, {"visible_group": visible_group, "events": visible_events})
         elif path == "/api/scenario-state":
             self._json(200, database.scenario_states())
         elif path == "/api/services/students/STU-1042":
@@ -91,6 +107,7 @@ class LabHandler(BaseHTTPRequestHandler):
                 "scenarios": database.scenario_states(),
                 "events": events,
                 "diagnostics": {str(k): v for k, v in evidence.instructor_diagnostics().items()},
+                "public_group": database.get_public_group(),
             })
         elif path.startswith("/api/instructor/evidence/"):
             try:
@@ -108,7 +125,18 @@ class LabHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
-        if path.startswith("/api/instructor/scenarios/") and path.endswith("/activate"):
+        if path == "/api/instructor/public-group":
+            try:
+                payload = self._read_json()
+                raw_group = payload.get("group")
+                group = None if raw_group in (None, "", 0, "0") else int(raw_group)
+                database.set_public_group(group)
+                label = f"Grupo {group}" if group is not None else "Ningún grupo"
+                self._json(200, {"ok": True, "public_group": group,
+                                 "message": f"Vista estudiantil asignada a {label}."})
+            except (ValueError, TypeError, json.JSONDecodeError) as exc:
+                self._json(400, {"ok": False, "error": str(exc)})
+        elif path.startswith("/api/instructor/scenarios/") and path.endswith("/activate"):
             try:
                 group = int(path.split("/")[4])
                 result = scenarios.activate_scenario(group)
@@ -123,8 +151,9 @@ class LabHandler(BaseHTTPRequestHandler):
                 self._json(400, {"ok": False, "error": str(exc)})
         elif path == "/api/instructor/reset-all":
             scenarios.reset_all()
+            database.set_public_group(None)
             self._json(200, {"ok": True, "message": "Todos los escenarios fueron desactivados y el historial de eventos fue limpiado."})
-        elif path == "/api/enrollment/reconcile":
+        elif path == "/api/instructor/enrollment/reconcile":
             if not database.is_scenario_active(7):
                 self._json(409, {"ok": False, "error": "El escenario 7 no está activo."})
                 return
@@ -162,7 +191,7 @@ def run_server() -> None:
     monitor.start()
     server = ThreadingHTTPServer((host, port), LabHandler)
     print("=" * 58)
-    print(" ITIL OPERATIONS LAB v0.2.0")
+    print(" ITIL OPERATIONS LAB v0.2.2")
     print(f" Vista de estudiantes: http://{host}:{port}")
     print(f" Panel privado docente: http://{host}:{port}/instructor")
     print(f" Métricas reales del equipo: cada {MONITOR_INTERVAL} segundos")

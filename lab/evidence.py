@@ -18,7 +18,7 @@ GROUP_TITLES = {
 INITIAL = {
     1: "GitHub Actions completó una ejecución de integración continua con resultado fallido. El equipo necesita determinar si el cambio reciente puede afectar una funcionalidad del portal.",
     2: "Una ejecución de integración continua se interrumpió antes de completar el flujo previsto. El equipo debe identificar en qué etapa ocurrió y cómo recuperar la ejecución.",
-    3: "Un usuario no consigue sincronizar sus cambios con el repositorio remoto. Tiene trabajo local que debe conservarse y necesita recuperar la sincronización.",
+    3: "Un usuario no consigue sincronizar sus cambios con el repositorio remoto. Tiene un commit local ya confirmado que debe preservarse antes de recuperar la sincronización.",
     4: "Se observa un incremento sostenido del uso de CPU en el portal de matrícula, acompañado por un aumento en los tiempos de respuesta.",
     5: "El espacio utilizado por los registros y respaldos del portal está creciendo y se aproxima al umbral operativo. El servicio continúa disponible.",
     6: "Después de integrar una actualización, la consulta del perfil de estudiante no devuelve toda la información esperada.",
@@ -63,15 +63,15 @@ def build_bundle(group: int, pack: int) -> dict[str, str]:
         content = f"# {title}\n\n{_g3_pack(pack)}"
     elif group == 1:
         texts = {
-            1: "## Ejecución de pruebas\n\n- Workflow: CI - Automated Tests\n- Job: regression-suite\n- Resultado: 1 prueba de regresión ejecutada; resultado fallido\n- Prueba: test_enrollment_fee_after_scholarship_update\n- Esperado: 800.00\n- Obtenido: 980.00\n- Estado del paso: exit code 1\n\nEsta salida corresponde al registro de la ejecución; el equipo debe relacionarla con el cambio.",
-            2: "## Cambio y comparación\n\n- Commit: `a41d9e2` — Refactor de cálculo de matrícula\n- Archivo modificado: `services/enrollment/fees.py`\n- Última ejecución exitosa: commit `91b7c40`, 09:12\n- Ejecución fallida: commit `a41d9e2`, 09:26\n- Pruebas de autenticación y consulta: aprobadas\n- Prueba de cálculo de beca: fallida",
+            1: "## Resumen de la ejecución\n\n- Workflow: G1 - Fallo de pruebas\n- Job: regression\n- Checkout: completado\n- Instalación de dependencias: completada\n- Resultado de la suite de regresión: failure\n- Una prueba terminó con resultado fallido.\n\nLa salida detallada de la prueba y su relación con el cambio reciente se entregan en la siguiente evidencia.",
+            2: "## Log de prueba y comparación de ejecuciones\n\n- Prueba fallida: `test_enrollment_fee_after_scholarship_update`\n- Resultado esperado: `800.00`\n- Resultado obtenido: `980.00`\n- Commit reciente: `a41d9e2` — Refactor de cálculo de matrícula\n- Archivo modificado: `services/enrollment/fees.py`\n- Última ejecución exitosa: commit `91b7c40`, 09:12\n- Ejecución fallida: commit `a41d9e2`, 09:26",
             3: "## Impacto funcional observado\n\n- Funcionalidad: cálculo del importe pendiente al aplicar una beca.\n- Caso de referencia: matrícula de S/ 1,000 con beca de 20 %.\n- Resultado esperado: S/ 800.\n- Resultado observado: S/ 980.\n- No hay evidencia de afectación en consulta de cursos ni autenticación.",
         }
         content = f"# {title}\n\n{texts[pack]}"
     elif group == 2:
         texts = {
-            1: "## Log del workflow\n\n- Workflow iniciado correctamente.\n- Etapa alcanzada: Validate configuration.\n- Resultado: failure.\n- El paso de instalación de dependencias no llegó a ejecutarse.\n- Las pruebas automatizadas no comenzaron.\n\n```text\nERROR: Required configuration key SERVICE_BASE_URL was not found.\nProcess completed with exit code 1.\n```",
-            2: "## Configuración y cambio reciente\n\n- Archivo: `.github/workflows/ci.yml`\n- Commit reciente: `b73ac11` — Ajuste de variables de entorno\n- Nombre utilizado por el workflow: `SERVICE_BASE_URL`\n- Variable disponible en configuración del repositorio: `SERVICE_ENDPOINT`\n- Última ejecución exitosa: antes del commit `b73ac11`.",
+            1: "## Etapa donde se interrumpió el flujo\n\n- Workflow iniciado correctamente.\n- Checkout del repositorio: completado.\n- Etapa: Validate configuration.\n- Resultado de la etapa: failure.\n\n```text\nERROR: Required configuration variable was not available.\nProcess completed with exit code 1.\n```",
+            2: "## Configuración y cambio reciente\n\n- Archivo: `.github/workflows/g2-fallo-prevalidacion.yml`\n- Commit reciente: `b73ac11` — Ajuste de variables de entorno\n- Nombre disponible en el entorno del paso: `SERVICE_ENDPOINT`.\n- Nombre requerido por la validación: `SERVICE_BASE_URL`.\n- La última ejecución exitosa ocurrió antes del cambio de configuración.",
             3: "## Alcance de la interrupción\n\n- Checkout del repositorio: completado.\n- Validación de configuración: fallida.\n- Instalación de dependencias: no iniciada.\n- Pruebas: no ejecutadas.\n- Artefactos de compilación: no generados.\n\nEl equipo debe determinar si corresponde corregir configuración, reintentar o escalar.",
         }
         content = f"# {title}\n\n{texts[pack]}"
@@ -80,7 +80,7 @@ def build_bundle(group: int, pack: int) -> dict[str, str]:
         if pack == 1:
             content = f"# {title}\n\n## Historial de cinco días\n\n{_fmt_rows(rows, ['captured_at','cpu_percent','requests_per_minute','avg_response_ms','component'])}"
         elif pack == 2:
-            content = "# " + title + "\n\n## Distribución de carga observada\n\n| Componente | CPU estimada | Solicitudes/min | Tiempo medio |\n|---|---:|---:|---:|\n| API Matrículas | 91 % | 1,480 | 2,450 ms |\n| API Estudiantes | 68 % | 620 | 780 ms |\n| API Cursos | 43 % | 310 | 410 ms |\n\nVentana de mayor demanda: 10:00–11:00. La degradación se concentra en el flujo de matrícula."
+            content = "# " + title + "\n\n## Distribución de carga observada\n\n| Componente | CPU máxima observada | Solicitudes/min | Tiempo medio |\n|---|---:|---:|---:|\n| API Matrículas | 94 % | 1,480 | 2,450 ms |\n| API Estudiantes | 68 % | 620 | 780 ms |\n| API Cursos | 43 % | 310 | 410 ms |\n\nLa muestra de mayor carga de API Matrículas coincide con el máximo de la serie histórica: 94 % de CPU, 1,480 solicitudes/min y 2,450 ms de respuesta. La degradación se concentra en el flujo de matrícula."
         else:
             content = "# " + title + "\n\n## Extracto de registros operativos\n\n```text\n10:14:02 enrollment-api WARN request_duration_ms=1980 route=/enrollments\n10:16:41 enrollment-api WARN request_duration_ms=2240 route=/enrollments\n10:19:08 enrollment-api ERROR worker queue delay=4.8s\n10:21:35 enrollment-api WARN cpu_utilization=94%\n10:22:11 gateway WARN upstream_latency_ms=2510\n```\n\nEl servicio responde, pero aumenta el tiempo de atención y la cola de solicitudes."
     elif group == 5:

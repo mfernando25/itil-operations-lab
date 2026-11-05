@@ -75,6 +75,11 @@ def init_db() -> None:
                 enrollment_status TEXT NOT NULL,
                 cached_at TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS lab_settings (
+                setting_key TEXT PRIMARY KEY,
+                setting_value TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
             """
         )
         _ensure_columns(conn, "metric_samples", {
@@ -87,6 +92,10 @@ def init_db() -> None:
         })
         _ensure_columns(conn, "events", {"private_json": "TEXT NOT NULL DEFAULT '{}'"})
         ts = now_iso()
+        conn.execute(
+            "INSERT OR IGNORE INTO lab_settings VALUES (?, ?, ?)",
+            ("public_group", "0", ts),
+        )
         conn.execute(
             "INSERT OR IGNORE INTO enrollment_current VALUES (?, ?, ?)",
             ("STU-1042", "Pendiente", ts),
@@ -162,9 +171,16 @@ def add_event(event_code: str, group_number: int, title: str, severity: str,
         return int(cur.lastrowid)
 
 
-def list_events(limit: int = 50, include_private: bool = False) -> list[dict[str, Any]]:
+def list_events(limit: int = 50, include_private: bool = False,
+                group_number: int | None = None) -> list[dict[str, Any]]:
     with connect() as conn:
-        rows = conn.execute("SELECT * FROM events ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+        if group_number is None:
+            rows = conn.execute("SELECT * FROM events ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM events WHERE group_number=? ORDER BY id DESC LIMIT ?",
+                (group_number, limit),
+            ).fetchall()
     result = []
     for row in rows:
         item = dict(row)
@@ -180,6 +196,33 @@ def list_events(limit: int = 50, include_private: bool = False) -> list[dict[str
                 item["private_evidence"] = {}
         result.append(item)
     return result
+
+
+def set_public_group(group_number: int | None) -> None:
+    """Select the only scenario whose events appear on the shared student dashboard."""
+    if group_number is not None and group_number not in range(1, 8):
+        raise ValueError("El grupo visible debe estar entre 1 y 7 o quedar sin asignar.")
+    value = str(group_number or 0)
+    with connect() as conn:
+        conn.execute(
+            """INSERT INTO lab_settings (setting_key, setting_value, updated_at)
+               VALUES ('public_group', ?, ?)
+               ON CONFLICT(setting_key) DO UPDATE SET
+                   setting_value=excluded.setting_value,
+                   updated_at=excluded.updated_at""",
+            (value, now_iso()),
+        )
+
+
+def get_public_group() -> int | None:
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT setting_value FROM lab_settings WHERE setting_key='public_group'"
+        ).fetchone()
+    if not row:
+        return None
+    value = int(row["setting_value"])
+    return value if value in range(1, 8) else None
 
 
 def set_scenario_state(scenario_id: int, active: bool) -> None:

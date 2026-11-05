@@ -113,13 +113,17 @@ def activate_group3() -> dict:
     _write(student / "evidence" / "initial-rejection.txt",
            "# Evidencia inicial G3\n\nComando ejecutado: `git pull --no-rebase origin main`\n\n"
            f"Código de salida: {pull.returncode}\n\n```text\n{pull.stdout}{pull.stderr}\n```\n")
+    local_commit = _git(student, "rev-parse", "HEAD").stdout.strip()
+    remote_commit = _git(admin, "rev-parse", "HEAD").stdout.strip()
     _write(student / "evidence" / "local-state.txt",
-           "# Estado local G3\n\n```text\n" + status.stdout + "\n" + graph.stdout + "\n```\n\n"
-           "La rama local contiene un commit propio que todavía debe conservarse.\n")
+           "# Estado local G3\n\nCommit local confirmado: `" + local_commit + "`\n\n```text\n"
+           + status.stdout + "\n" + graph.stdout + "\n```\n\n"
+           "El commit local ya está confirmado en `feature/matricula` y debe preservarse.\n")
     _write(student / "evidence" / "remote-state.txt",
-           "# Estado remoto G3\n\n```text\n" + _git(admin, "log", "--oneline", "-4").stdout + "\n\n"
+           "# Estado remoto G3\n\nCommit remoto confirmado: `" + remote_commit + "`\n\n```text\n"
+           + _git(admin, "log", "--oneline", "-4").stdout + "\n\n"
            + _git(admin, "show", "HEAD:config/enrollment.ini").stdout + "```\n\n"
-           "La rama remota también avanzó desde la base común.\n")
+           "La rama remota avanzó desde la base común con otro commit confirmado.\n")
     _write(student / "evidence" / "working-diff.txt",
            "# Diferencia/conflicto G3\n\n```text\n" + diff.stdout + "\n" + pull.stdout + pull.stderr + "```\n")
     _activate_state(3)
@@ -141,13 +145,20 @@ def activate_group4() -> dict:
     cpu_values = [38, 42, 47, 53, 59, 66, 72, 81, 89, 94]
     rpm_values = [420, 460, 510, 590, 680, 790, 930, 1110, 1320, 1480]
     latency_values = [310, 340, 390, 470, 610, 780, 1020, 1510, 1980, 2450]
-    now = datetime.now().astimezone().replace(minute=0, second=0, microsecond=0)
+    now = datetime.now().astimezone()
+    first_hour = max(0, now.hour - 4)
+    second_hour = max(0, now.hour - 1)
     ids = []
     for index, (cpu, rpm, latency) in enumerate(zip(cpu_values, rpm_values, latency_values)):
-        captured = (now - timedelta(days=5) + timedelta(hours=12 * index)).isoformat(timespec="seconds")
+        day_offset = index // 2
+        hour = first_hour if index % 2 == 0 else second_hour
+        sample_day = now.date() - timedelta(days=4 - day_offset)
+        captured = datetime.combine(sample_day, datetime.min.time(), tzinfo=now.tzinfo).replace(
+            hour=hour
+        ).isoformat(timespec="seconds")
         ids.append(database.add_metric(
             "scenario", cpu, 54 + index * 1.1, 61, 0,
-            "Carga operativa del portal durante la ventana histórica de análisis.", captured,
+            "Historial del caso: carga operativa del portal.", captured,
             requests_per_minute=rpm, avg_response_ms=latency,
             component="enrollment-api", scenario_group=4,
         ))
@@ -166,18 +177,25 @@ def activate_group4() -> dict:
 def activate_group5() -> dict:
     # Data describes a 10 GB logical volume. Small placeholder files are created only;
     # no large real files are written to the laptop.
-    used_gb = [2.4, 3.3, 4.6, 6.8, 8.7]
-    available_gb = [7.6, 6.7, 5.4, 3.2, 1.3]
-    log_gb = [0.8, 1.3, 2.0, 3.0, 3.9]
-    backup_gb = [1.2, 1.6, 2.0, 2.8, 3.6]
-    gateway_gb = [0.4, 0.4, 0.6, 1.0, 1.2]
-    now = datetime.now().astimezone().replace(hour=9, minute=0, second=0, microsecond=0)
+    used_gb = [2.4, 2.6, 3.3, 3.8, 4.6, 5.2, 6.0, 6.8, 7.8, 8.7]
+    available_gb = [7.6, 7.4, 6.7, 6.2, 5.4, 4.8, 4.0, 3.2, 2.2, 1.3]
+    log_gb = [0.8, 0.9, 1.3, 1.5, 2.0, 2.3, 2.8, 3.0, 3.5, 3.9]
+    backup_gb = [1.2, 1.3, 1.6, 1.8, 2.0, 2.3, 2.5, 2.8, 3.1, 3.6]
+    gateway_gb = [0.4, 0.4, 0.4, 0.5, 0.6, 0.6, 0.7, 1.0, 1.2, 1.2]
+    now = datetime.now().astimezone()
+    first_hour = max(0, now.hour - 4)
+    second_hour = max(0, now.hour - 1)
     ids = []
     for index, (used, available) in enumerate(zip(used_gb, available_gb)):
-        captured = (now - timedelta(days=4 - index)).isoformat(timespec="seconds")
+        day_offset = index // 2
+        hour = first_hour if index % 2 == 0 else second_hour
+        sample_day = now.date() - timedelta(days=4 - day_offset)
+        captured = datetime.combine(sample_day, datetime.min.time(), tzinfo=now.tzinfo).replace(
+            hour=hour
+        ).isoformat(timespec="seconds")
         ids.append(database.add_metric(
             "scenario", None, None, None, round(used * 1024, 1),
-            "Consumo del volumen lógico de registros y respaldos.", captured,
+            "Historial del caso: consumo del volumen lógico de registros y respaldos.", captured,
             storage_capacity_gb=10.0, storage_available_gb=available,
             component="enrollment-volume", scenario_group=5,
         ))
