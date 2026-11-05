@@ -5,6 +5,7 @@ name: G1 - Fallo de pruebas
     branches: [scenario/group1]
 permissions:
   contents: read
+  actions: read
 jobs:
   regression:
     runs-on: ubuntu-latest
@@ -17,5 +18,17 @@ jobs:
           python-version: '3.12'
       - name: Instalar dependencias
         run: python -m pip install -r requirements.txt
+      - name: Registrar commit y archivos modificados
+        run: |
+          mkdir -p evidence
+          git log -2 --oneline | tee evidence/commit-history.txt
+          git show --stat --oneline HEAD | tee evidence/changed-files.txt
       - name: Ejecutar prueba de regresión
-        run: python -m pytest -q scenario_tests/group1
+        run: python -m pytest -q scenario_tests/group1 --junitxml=evidence/test-results.xml 2>&1 | tee evidence/test-output.txt
+      - name: Conservar evidencia de la ejecución
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: G1-evidencia-ejecucion
+          path: evidence/
+          if-no-files-found: warn
