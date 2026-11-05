@@ -6,9 +6,8 @@ data/*.db
 data/*.db-shm
 data/*.db-wal
 lab_data/storage_test/*
+lab_data/scenarios/
 evidence/*.log
 evidence/*.txt
+evidence/*.json
 .env
-
-evidence/*
-!evidence/.gitkeep

@@ -1,26 +1,8 @@
-# ITIL Operations Lab
+# ITIL Operations Lab · v0.2.0
 
-Laboratorio local para una simulación académica de operaciones TI e ITIL 4.
+Laboratorio académico de operaciones TI e ITIL 4 para investigar siete eventos de un portal universitario. La solución genera datos, historiales y evidencias de escenario al momento de activarlos; no necesita esperar cinco días de recolección.
 
-## Componentes
-
-- Portal universitario de demostración.
-- Dashboard local de CPU, memoria, disco e histórico de métricas.
-- Registro de eventos en SQLite.
-- Controles locales para activar escenarios de laboratorio.
-- Script PowerShell para capturar un error local de Git.
-- GitHub Actions: CI normal y workflows de demostración.
-- Pruebas automatizadas de la funcionalidad base.
-
-> Entorno educativo. No contiene servicios universitarios reales ni debe conectarse a datos reales.
-
-## Requisitos
-
-- Python 3.10 o superior (recomendado 3.11+).
-- Git.
-- Windows 10/11, macOS o Linux.
-
-## Instalación en Windows PowerShell
+## Inicio rápido en Windows
 
 ```powershell
 git clone https://github.com/mfernando25/itil-operations-lab.git
@@ -29,69 +11,85 @@ cd itil-operations-lab
 .\scripts\start_lab.ps1
 ```
 
-Abre `http://127.0.0.1:8000`. Si PowerShell bloquea los scripts en esa sesión, ejecuta:
+- **Vista de estudiantes:** http://127.0.0.1:8000
+- **Panel privado del docente:** http://127.0.0.1:8000/instructor
 
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-```
+Mantén abierta la ventana de PowerShell durante la sesión. Detén el servidor con `Ctrl+C`.
 
-También puedes crear un entorno virtual manualmente con `py -m venv .venv`, activarlo e instalar `requirements.txt`.
+## Requisitos
 
-## Ejecutar en otra computadora
+- Windows 10/11 (probado como entorno principal), Python 3.10 o superior y Git en PATH.
+- La versión local no requiere Docker ni cuentas personales de estudiantes.
+- Para los grupos 1 y 2 se necesita acceso al repositorio GitHub y a su pestaña Actions.
 
-Clona el mismo repositorio e instala las dependencias en esa PC. No copies la carpeta `.venv`: cada computadora debe crear su propio entorno virtual.
+## Los siete grupos
 
-## Monitoreo
+| Grupo | Evento | Mecanismo de demostración |
+|---|---|---|
+| 1 | Fallo en pruebas automatizadas | GitHub Actions ejecuta una prueba de regresión deliberadamente fallida y publica logs como artefacto. |
+| 2 | Fallo durante el workflow | GitHub Actions detiene la ejecución durante una validación de configuración, antes de iniciar tests. |
+| 3 | Sincronización Git | Se construye un repositorio local aislado con rama remota y local divergentes; el pull produce un conflicto reproducible. |
+| 4 | CPU anormal | Se generan diez muestras distribuidas en cinco días con CPU, solicitudes/minuto y latencia correlacionadas. |
+| 5 | Crecimiento de almacenamiento | Se generan cinco puntos de capacidad/espacio disponible y desglose de logs y respaldos en un volumen lógico de 10 GB. |
+| 6 | Incompatibilidad entre servicios | El proveedor cambia campos del contrato y el consumidor no puede completar el perfil. |
+| 7 | Información desactualizada | La escritura se confirma en el registro principal, mientras la caché conserva el estado anterior. |
 
-- Las métricas reales corresponden al equipo donde se ejecuta el laboratorio.
-- El servidor registra CPU, memoria, disco y uso de la carpeta de prueba en SQLite cada 60 segundos por defecto.
-- Mantén el servidor activo para recopilar histórico real.
-- Los datos agregados por los escenarios se identifican como `simulated`.
-- Exporta las últimas 120 horas a CSV con `python scripts/export_metrics.py --hours 120`.
+## Historiales de cinco días: cómo funcionan
 
-El intervalo se puede cambiar con `MONITOR_INTERVAL_SECONDS` (mínimo 5 segundos).
+G4 y G5 crean sus series históricas al pulsar **Preparar / activar** en el panel docente. Las marcas temporales se distribuyen en los cinco días anteriores a la activación; la evidencia queda disponible inmediatamente.
 
-## Pruebas
+Esos datos son **datos generados para el escenario**, no registros históricos reales de la laptop. Las métricas reales del equipo (CPU, memoria y disco) se siguen registrando aparte, cada 60 segundos por defecto. La interfaz de estudiantes no presenta etiquetas técnicas sobre el origen de los puntos. El panel docente conserva la distinción.
+
+G5 modela un volumen lógico de 10 GB. Solo se escribe un pequeño archivo descriptivo; no se crean archivos de varios gigabytes ni se llena el disco real.
+
+## Flujo del docente
+
+1. Abre `/instructor` en tu laptop.
+2. Pulsa **Preparar / activar** para el grupo asignado. La activación genera el evento y, cuando corresponde, el dataset o repositorio de práctica.
+3. Abre **Preparar evidencia para correo**, selecciona grupo y paquete y descarga el Markdown.
+4. Envía primero la notificación inicial (paquete 0). Entrega los paquetes 1, 2 y 3 según las solicitudes justificadas de los equipos.
+5. Consulta **Notas internas** solo desde el panel docente. No compartas esa consola.
+
+Cada grupo dispone de una notificación inicial y tres paquetes adicionales. Los paquetes son materiales de apoyo para la investigación; el estudiante debe explicar qué información necesita y por qué.
+
+## GitHub Actions: grupos 1 y 2
+
+En el panel docente usa el enlace a Actions:
+
+- `G1 - Fallo de pruebas`: ejecuta una prueba de regresión que falla. El workflow guarda logs, resultado JUnit, historial de commits y archivos modificados en el artefacto `G1-evidencia-ejecucion`.
+- `G2 - Fallo de prevalidación`: detiene el flujo antes de instalar dependencias y ejecutar pruebas. Guarda la salida y configuración del workflow en `G2-evidencia-prevalidacion`.
+
+Descarga cada artefacto desde la ejecución correspondiente en GitHub Actions. La CI normal de `main` ejecuta la suite del proyecto y debe permanecer aprobada.
+
+## Grupo 3: repositorio de práctica aislado
+
+Al activar G3 se crea `lab_data/scenarios/g3/student-workspace`, un repositorio local de práctica. No modifica el repositorio Git de este proyecto. Los archivos `evidence/` que contiene documentan el rechazo, el estado local y el estado remoto. Git debe estar instalado y disponible en PATH.
+
+## Grupos 6 y 7: comprobación funcional
+
+En la vista de estudiantes:
+
+- La consulta de perfil permite observar la degradación después de activar G6.
+- La consulta de matrícula permite comparar el estado disponible antes y después de activar G7.
+
+En el panel docente se puede reiniciar cada escenario. En G7, el botón de sincronización del portal actualiza la caché después de que el equipo haya investigado el problema.
+
+## Arquitectura y alcance
+
+La versión local es una aplicación ligera Python con límites lógicos separados para estudiantes, cursos y matrículas, un servidor HTTP local y SQLite. Esta versión prioriza instalación simple y reproducibilidad para la sesión en aula; los límites de servicio se simulan dentro de un mismo proceso y **todavía no son tres contenedores FastAPI independientes**. No se debe presentar como una arquitectura de microservicios desplegada en Docker.
+
+## Pruebas y reinicio
 
 ```powershell
 python -m pytest -q
-```
-
-La suite normal usa `tests/`. Los workflows de escenario se lanzan manualmente desde **Actions** o mediante push a sus ramas dedicadas (`scenario/group1` y `scenario/group2`). El fallo deliberado de G1 está aislado para no romper la CI normal de `main`.
-
-## Reiniciar
-
-```powershell
 python scripts/reset_lab.py
 ```
 
-Esto reinicia la base de datos local y archivos temporales de prueba; no cambia código ni commits.
+El reinicio borra la base local y los repositorios/datasets generados. No modifica los commits del repositorio GitHub. Después de reiniciar, activa nuevamente los grupos para regenerar sus evidencias.
 
-## Estructura
+## Seguridad
 
-```text
-app.py
-lab/                  lógica, servidor, métricas y escenarios
-web/                  interfaz del dashboard
-tests/                pruebas normales
-scenario_tests/       pruebas aisladas de demostración
-scripts/              instalación, ejecución, reset y exportación
-.github/workflows/    CI y workflows de escenarios
-data/                 base de datos local (ignorada por Git)
-lab_data/             datos de prueba
-```
-
-## Seguridad y operación
-
-- No publiques tokens, contraseñas, archivos `.env` ni información personal.
-- Mantén el servidor enlazado a `127.0.0.1` durante la clase.
-- No uses información real de estudiantes.
-- CPU y almacenamiento de los escenarios son simulaciones acotadas: no saturan el procesador ni llenan el disco.
-
-## Workflows
-
-- `CI - Pruebas normales`: se ejecuta en `main`.
-- `G1 - Fallo de pruebas`: falla intencionalmente en la prueba de regresión cuando se lanza desde Actions o desde `scenario/group1`.
-- `G2 - Fallo de prevalidación`: falla antes de las pruebas si no existe la variable de repositorio `LAB_SERVICE_ENDPOINT`; es un fallo deliberado de la demostración.
-
-Para los workflows, consulta el historial de ejecuciones en la pestaña **Actions**.
+- El servidor se enlaza a `127.0.0.1`; no lo expongas a la red local.
+- No uses datos reales de estudiantes ni secretos en el repositorio.
+- La ruta `/instructor` y sus endpoints son una consola local sin autenticación: no compartas esa URL ni ejecutes el servidor en una interfaz de red pública.
+- El archivo `INSTRUCTOR_RUNBOOK_PRIVATE.md` es para el docente y no debe subirse al repositorio público.
