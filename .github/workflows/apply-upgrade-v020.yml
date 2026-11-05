@@ -1,0 +1,39 @@
+name: Apply ITIL Operations Lab v0.2.0 upgrade
+"on":
+  push:
+    paths:
+      - upgrade/itil-operations-lab-v0.2.0-upgrade.tar.gz
+permissions:
+  contents: write
+jobs:
+  apply-upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Extract v0.2.0 project
+        run: |
+          mkdir -p /tmp/itil-upgrade
+          tar -xzf upgrade/itil-operations-lab-v0.2.0-upgrade.tar.gz -C /tmp/itil-upgrade
+          cp -a /tmp/itil-upgrade/itil-operations-lab/. .
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Compile project
+        run: python -m compileall -q lab tests scripts
+      - name: Run all tests
+        run: python -m pytest -q
+      - name: Publish clean upgrade to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f upgrade/itil-operations-lab-v0.2.0-upgrade.tar.gz
+          rm -f .github/workflows/apply-upgrade-v020.yml
+          git add -A
+          git commit -m "Upgrade ITIL Operations Lab to v0.2.0"
+          git push origin HEAD:main
