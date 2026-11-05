@@ -1,4 +1,4 @@
-# ITIL Operations Lab · v0.2.0
+# ITIL Operations Lab · v0.2.1
 
 Laboratorio académico de operaciones TI e ITIL 4 para investigar siete eventos de un portal universitario. La solución genera datos, historiales y evidencias de escenario al momento de activarlos; no necesita esperar cinco días de recolección.
 
@@ -80,12 +80,14 @@ La versión local es una aplicación ligera Python con límites lógicos separad
 
 ## Pruebas y reinicio
 
+Detén primero el servidor con `Ctrl+C`. Después ejecuta:
+
 ```powershell
-python -m pytest -q
-python scripts/reset_lab.py
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe scripts\reset_lab.py
 ```
 
-El reinicio borra la base local y los repositorios/datasets generados. No modifica los commits del repositorio GitHub. Después de reiniciar, activa nuevamente los grupos para regenerar sus evidencias.
+El reinicio elimina la base local y los repositorios/datasets generados. La limpieza de carpetas incluye un reintento compatible con Windows para archivos con atributo de solo lectura, incluidos los hooks de los repositorios Git de práctica. Si Windows mantiene un bloqueo por una terminal, editor o Explorador abierto, el script informa la ruta y conserva la base de datos hasta completar la limpieza. No modifica commits del repositorio GitHub. Después de reiniciar, activa nuevamente los grupos para regenerar sus evidencias.
 
 ## Seguridad
 
