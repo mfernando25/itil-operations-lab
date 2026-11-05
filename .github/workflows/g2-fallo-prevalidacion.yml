@@ -20,20 +20,20 @@ jobs:
         shell: bash
         env:
           SERVICE_BASE_URL: ${{ vars.SERVICE_BASE_URL }}
+          SERVICE_ENDPOINT: https://matricula.internal.invalid
         run: |
-          set +e
+          set -o pipefail
           {
             echo "Workflow started: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo "Stage: Validate configuration"
-            if [ -z "$SERVICE_ENDPOINT" ]; then
-              echo "ERROR: Required configuration key SERVICE_BASE_URL was not found."
-              echo "Repository configuration currently contains a differently named endpoint variable."
+            if [ -z "$SERVICE_BASE_URL" ]; then
+              echo "ERROR: Required configuration variable SERVICE_BASE_URL was not found."
+              echo "An endpoint is available as SERVICE_ENDPOINT, but the validator requires SERVICE_BASE_URL."
               echo "Dependency installation and automated tests were not started."
               exit 1
             fi
             echo "Configuration found."
           } 2>&1 | tee evidence/prevalidation-output.txt
-          exit ${PIPESTATUS[0]}
       - name: Conservar evidencia de la ejecución
         if: always()
         uses: actions/upload-artifact@v4

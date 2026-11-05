@@ -113,9 +113,9 @@ def instructor_diagnostics() -> dict[int, str]:
     return {
         1: "La implementación de cálculo utiliza el porcentaje como importe fijo en lugar de multiplicarlo por la base. La prueba de regresión detecta la diferencia.",
         2: "El workflow solicita SERVICE_BASE_URL, pero la configuración existente usa SERVICE_ENDPOINT. La validación detiene la pipeline antes de tests.",
-        3: "La rama remota y la rama local modificaron la misma línea. El pull desde main provoca un conflicto de merge; conservar y reconciliar ambos cambios antes de completar.",
-        4: "El escenario genera una serie ascendente de CPU y latencia durante cinco días. La mayor degradación está en enrollment-api. Datos de escenario, no telemetría histórica de la laptop.",
-        5: "El uso estimado sube desde 24 % hasta 87 % de un volumen de 10 GB. El crecimiento se concentra en logs de matrícula y respaldos sin rotación. No borrar sin validar retención.",
+        3: "La rama local contiene un commit ya confirmado que modificó el archivo de configuración; main avanzó con otro commit sobre la misma línea. El pull produce un conflicto de merge. Preservar y reconciliar ambos commits antes de completar.",
+        4: "El escenario genera diez puntos distribuidos en cinco fechas de CPU, solicitudes y latencia. La muestra máxima de enrollment-api es 94 % de CPU, 1,480 solicitudes/min y 2,450 ms. Datos del caso, no telemetría histórica de la laptop.",
+        5: "El escenario genera diez puntos distribuidos en cinco fechas para un volumen lógico de 10 GB. El uso sube de 2.4 GB a 8.7 GB (87 %); el crecimiento se concentra en logs y respaldos sin rotación. No borrar sin validar retención.",
         6: "El proveedor responde studentId/courseId en camelCase, mientras el consumidor espera student_id/course_id en snake_case. Es una incompatibilidad de contrato entre servicios.",
         7: "La escritura se confirma en la base principal, pero la caché conserva Pendiente. La solución de demostración es invalidar/actualizar la caché, no alterar el registro principal.",
     }

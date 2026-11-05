@@ -1,4 +1,4 @@
-# ITIL Operations Lab · v0.2.1
+# ITIL Operations Lab · v0.2.2
 
 Laboratorio académico de operaciones TI e ITIL 4 para investigar siete eventos de un portal universitario. La solución genera datos, historiales y evidencias de escenario al momento de activarlos; no necesita esperar cinco días de recolección.
 
@@ -13,6 +13,8 @@ cd itil-operations-lab
 
 - **Vista de estudiantes:** http://127.0.0.1:8000
 - **Panel privado del docente:** http://127.0.0.1:8000/instructor
+
+El repositorio es público. Los estudiantes pueden inspeccionar código fuente, commits, workflows y ejecuciones como parte de su investigación. Se espera que delimiten su búsqueda al grupo asignado y fundamenten sus decisiones; la evaluación se centra en el razonamiento y la atención propuesta, no en adivinar una causa oculta.
 
 Mantén abierta la ventana de PowerShell durante la sesión. Detén el servidor con `Ctrl+C`.
 
@@ -36,9 +38,9 @@ Mantén abierta la ventana de PowerShell durante la sesión. Detén el servidor 
 
 ## Historiales de cinco días: cómo funcionan
 
-G4 y G5 crean sus series históricas al pulsar **Preparar / activar** en el panel docente. Las marcas temporales se distribuyen en los cinco días anteriores a la activación; la evidencia queda disponible inmediatamente.
+G4 y G5 crean sus series históricas al pulsar **Preparar / activar** en el panel docente. Cada grupo genera diez puntos, dos por fecha, distribuidos en cinco fechas consecutivas; la evidencia queda disponible inmediatamente.
 
-Esos datos son **datos generados para el escenario**, no registros históricos reales de la laptop. Las métricas reales del equipo (CPU, memoria y disco) se siguen registrando aparte, cada 60 segundos por defecto. La interfaz de estudiantes no presenta etiquetas técnicas sobre el origen de los puntos. El panel docente conserva la distinción.
+Esos datos son **historial del caso generado para la actividad**, no registros históricos reales de la laptop. La documentación de la actividad debe indicar que se proporciona un conjunto histórico para analizar la evolución del servicio. Las métricas reales del equipo (CPU, memoria y disco) se siguen registrando aparte, cada 60 segundos por defecto. El panel docente conserva la identificación de la procedencia de los datos.
 
 G5 modela un volumen lógico de 10 GB. Solo se escribe un pequeño archivo descriptivo; no se crean archivos de varios gigabytes ni se llena el disco real.
 
@@ -72,7 +74,7 @@ En la vista de estudiantes:
 - La consulta de perfil permite observar la degradación después de activar G6.
 - La consulta de matrícula permite comparar el estado disponible antes y después de activar G7.
 
-En el panel docente se puede reiniciar cada escenario. En G7, el botón de sincronización del portal actualiza la caché después de que el equipo haya investigado el problema.
+En el panel docente se puede reiniciar cada escenario. En G7, el docente utiliza **Reconciliar caché G7** desde la sección de recuperación supervisada, después de que el equipo haya presentado y justificado su propuesta. La vista de estudiantes no dispone de ese control.
 
 ## Arquitectura y alcance
 
@@ -88,6 +90,10 @@ Detén primero el servidor con `Ctrl+C`. Después ejecuta:
 ```
 
 El reinicio elimina la base local y los repositorios/datasets generados. La limpieza de carpetas incluye un reintento compatible con Windows para archivos con atributo de solo lectura, incluidos los hooks de los repositorios Git de práctica. Si Windows mantiene un bloqueo por una terminal, editor o Explorador abierto, el script informa la ruta y conserva la base de datos hasta completar la limpieza. No modifica commits del repositorio GitHub. Después de reiniciar, activa nuevamente los grupos para regenerar sus evidencias.
+
+## Vista compartida por grupo
+
+En el panel docente selecciona el grupo que se está atendiendo y pulsa **Aplicar vista**. La vista estudiantil muestra únicamente los eventos y las series históricas del grupo asignado. Al activar un escenario, se asigna automáticamente ese grupo; al reiniciarlo, se limpia la asignación si corresponde. Esta separación evita revelar accidentalmente eventos de otros equipos, pero no oculta el código público ni sustituye la responsabilidad de investigar el caso asignado.
 
 ## Seguridad
 

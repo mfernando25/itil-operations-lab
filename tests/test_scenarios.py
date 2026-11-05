@@ -36,7 +36,8 @@ def test_group4_generates_five_day_cpu_and_service_history(isolated_db):
     assert rows[-1]["requests_per_minute"] == 1480
     assert rows[-1]["avg_response_ms"] == 2450
     days = {datetime.fromisoformat(row["captured_at"]).date() for row in rows}
-    assert len(days) >= 5
+    assert len(days) == 5
+    assert all(sum(1 for row in rows if datetime.fromisoformat(row["captured_at"]).date() == day) == 2 for day in days)
     bundle = evidence.build_bundle(4, 1)["markdown"]
     assert "Historial de cinco días" in bundle
     assert "2450" in bundle
@@ -46,10 +47,13 @@ def test_group5_generates_five_day_log_and_backup_growth_without_large_files(iso
     result = scenarios.activate_group5()
     assert result["event_id"] > 0
     rows = database.list_metrics(group_number=5)
-    assert len(rows) == 5
+    assert len(rows) == 10
     assert rows[0]["storage_available_gb"] > rows[-1]["storage_available_gb"]
     assert rows[-1]["storage_capacity_gb"] == 10.0
     assert rows[-1]["storage_available_gb"] == 1.3
+    days = {datetime.fromisoformat(row["captured_at"]).date() for row in rows}
+    assert len(days) == 5
+    assert all(sum(1 for row in rows if datetime.fromisoformat(row["captured_at"]).date() == day) == 2 for day in days)
     assert evidence.build_bundle(5, 2)["filename"] == "G5_evidencia_2.md"
 
 
