@@ -67,21 +67,57 @@ def current_metrics(public_group: int | None = None) -> dict:
         collect_live_sample()
         history = database.list_metrics(100, source="real")
     latest = history[-1] if history else {}
-    if public_group == 4 and database.is_scenario_active(4):
-        cpu_history = database.list_metrics(group_number=4)
-        current = cpu_history[-1] if cpu_history else latest
+
+    g4_active = public_group == 4 and database.is_scenario_active(4)
+    g5_active = public_group == 5 and database.is_scenario_active(5)
+
+    if g4_active:
+        scenario_cpu_history = database.list_metrics(group_number=4)
+        cpu_history = [
+            {**row, "memory_percent": None, "disk_percent": None}
+            for row in scenario_cpu_history
+        ]
+        # Only CPU, requests and latency come from the synthetic G4 case.
+        # Memory and disk remain the latest real measurements from this host.
+        current = dict(latest)
+        if scenario_cpu_history:
+            last_cpu = scenario_cpu_history[-1]
+            current.update({
+                "cpu_percent": last_cpu["cpu_percent"],
+                "requests_per_minute": last_cpu["requests_per_minute"],
+                "avg_response_ms": last_cpu["avg_response_ms"],
+                "cpu_captured_at": last_cpu["captured_at"],
+            })
+        cpu_history_label = "CPU del servicio · historial sintético de cinco días"
+        cpu_source_label = "CPU del servicio · dato sintético"
+        cpu_window_label = "Cinco días · datos sintéticos del caso"
     else:
         cpu_history = history
         current = latest
-    if public_group == 5 and database.is_scenario_active(5):
+        cpu_history_label = "CPU del equipo · mediciones reales de la sesión"
+        cpu_source_label = "Uso real del procesador del equipo"
+        cpu_window_label = "Sesión actual · datos reales"
+
+    if g5_active:
         storage_history = database.list_metrics(group_number=5)
         storage_current = storage_history[-1] if storage_history else latest
+        storage_history_label = "Almacenamiento del servicio · historial sintético de cinco días"
+        storage_window_label = "Cinco días · volumen lógico simulado"
     else:
-        storage_history = []
+        # The local laboratory folder is measured on the host; show only its actual session history.
+        storage_history = history
         storage_current = latest
+        storage_history_label = "Almacenamiento local del laboratorio · sesión actual"
+        storage_window_label = "Sesión actual · mediciones reales"
+
     return {
         "current": current,
         "history": cpu_history,
         "storage_current": storage_current,
         "storage_history": storage_history,
+        "cpu_history_label": cpu_history_label,
+        "cpu_source_label": cpu_source_label,
+        "cpu_window_label": cpu_window_label,
+        "storage_history_label": storage_history_label,
+        "storage_window_label": storage_window_label,
     }
