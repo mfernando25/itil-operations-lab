@@ -23,7 +23,7 @@ jobs:
           tar -xzf /tmp/itil-lab.tar.gz -C /tmp/itil-upgrade
           test -f /tmp/itil-upgrade/itil-operations-lab/app.py
           test -f /tmp/itil-upgrade/itil-operations-lab/lab/evidence.py
-          cp -a /tmp/itil-upgrade/itil-operations-lab/. .
+          find /tmp/itil-upgrade/itil-operations-lab -mindepth 1 -maxdepth 1 ! -name .github -exec cp -a {} . \;
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -40,7 +40,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           rm -rf upgrade
-          rm -f .github/workflows/apply-upgrade-v020.yml
           git add -A
           git commit -m "Upgrade ITIL Operations Lab to v0.2.0"
           git push origin HEAD:main
