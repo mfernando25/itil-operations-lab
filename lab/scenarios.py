@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from . import database
+from .filesystem import remove_tree
 
 ROOT = Path(__file__).resolve().parents[1]
 LAB_DATA = ROOT / "lab_data" / "scenarios"
@@ -69,7 +70,7 @@ def activate_group3() -> dict:
     if shutil.which("git") is None:
         raise RuntimeError("Git no está instalado o no está disponible en PATH.")
     if G3_DIR.exists():
-        shutil.rmtree(G3_DIR)
+        remove_tree(G3_DIR)
     remote = G3_DIR / "remote.git"
     seed = G3_DIR / "seed"
     student = G3_DIR / "student-workspace"
@@ -243,6 +244,10 @@ def activate_scenario(scenario_id: int) -> dict:
 def reset_scenario(scenario_id: int) -> dict:
     if scenario_id not in range(1, 8):
         raise ValueError("Grupo inválido.")
+    # Remove G3's nested Git repositories before marking the scenario inactive.
+    # If Windows still has a handle open, preserve the active state and report the path.
+    if scenario_id == 3 and G3_DIR.exists():
+        remove_tree(G3_DIR)
     database.set_scenario_state(scenario_id, False)
     if scenario_id == 7:
         database.update_enrollment_current("Pendiente")
@@ -250,8 +255,6 @@ def reset_scenario(scenario_id: int) -> dict:
     if scenario_id == 6:
         # The route derives its behavior from scenario_state, so this deactivates the mismatch.
         pass
-    if scenario_id == 3 and G3_DIR.exists():
-        shutil.rmtree(G3_DIR)
     # Keep event history for auditability. Each event is timestamped and remains visible.
     return {"message": f"Grupo {scenario_id} desactivado. El historial de eventos se conserva."}
 
