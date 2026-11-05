@@ -73,12 +73,13 @@ def test_g7_stale_read_and_teacher_reconciliation_through_http(live_http):
 
 
 def test_student_events_are_limited_to_teacher_assigned_active_group(live_http):
-    call_json(live_http, "/api/instructor/scenarios/6/activate", "POST", {})
-    call_json(live_http, "/api/instructor/scenarios/7/activate", "POST", {})
     status, empty = call_json(live_http, "/api/events")
     assert status == 200
     assert empty["visible_group"] is None
     assert empty["events"] == []
+
+    call_json(live_http, "/api/instructor/scenarios/6/activate", "POST", {})
+    call_json(live_http, "/api/instructor/scenarios/7/activate", "POST", {})
     status, assigned = call_json(live_http, "/api/instructor/public-group", "POST", {"group": 6})
     assert status == 200
     assert assigned["public_group"] == 6
