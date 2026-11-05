@@ -2,7 +2,7 @@ name: Apply ITIL Operations Lab v0.2.0 upgrade
 "on":
   push:
     paths:
-      - upgrade/itil-operations-lab-v0.2.0-upgrade.tar.gz
+      - 'upgrade/part-*.b64'
 permissions:
   contents: write
 jobs:
@@ -13,10 +13,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Extract v0.2.0 project
+      - name: Reassemble and validate upgrade
+        shell: bash
         run: |
+          cat upgrade/part-*.b64 > /tmp/itil-lab.b64
+          base64 --decode /tmp/itil-lab.b64 > /tmp/itil-lab.tar.gz
+          gzip -t /tmp/itil-lab.tar.gz
           mkdir -p /tmp/itil-upgrade
-          tar -xzf upgrade/itil-operations-lab-v0.2.0-upgrade.tar.gz -C /tmp/itil-upgrade
+          tar -xzf /tmp/itil-lab.tar.gz -C /tmp/itil-upgrade
+          test -f /tmp/itil-upgrade/itil-operations-lab/app.py
+          test -f /tmp/itil-upgrade/itil-operations-lab/lab/evidence.py
           cp -a /tmp/itil-upgrade/itil-operations-lab/. .
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -26,13 +32,14 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Compile project
         run: python -m compileall -q lab tests scripts
-      - name: Run all tests
+      - name: Run complete test suite
         run: python -m pytest -q
-      - name: Publish clean upgrade to main
+      - name: Publish v0.2.0 after successful verification
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          rm -f upgrade/itil-operations-lab-v0.2.0-upgrade.tar.gz
+          rm -rf upgrade
           rm -f .github/workflows/apply-upgrade-v020.yml
           git add -A
           git commit -m "Upgrade ITIL Operations Lab to v0.2.0"
