@@ -1,3 +1,3 @@
 ITIL Operations Lab
-Version: 0.2.0
-Build: classroom-ready scenario upgrade
+Version: 0.2.1
+Build: Windows-safe reset patch
