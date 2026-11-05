@@ -155,6 +155,18 @@ def list_metrics(limit: int = 120, group_number: int | None = None, source: str 
     return [dict(row) for row in rows]
 
 
+
+def delete_scenario_metrics(group_number: int) -> int:
+    """Delete generated metric samples for G4 or G5 before a new case run."""
+    if group_number not in {4, 5}:
+        raise ValueError("Solo se pueden limpiar las métricas sintéticas de G4 o G5.")
+    with connect() as conn:
+        cur = conn.execute(
+            "DELETE FROM metric_samples WHERE scenario_group=?",
+            (group_number,),
+        )
+        return int(cur.rowcount)
+
 def add_event(event_code: str, group_number: int, title: str, severity: str,
               source: str, description: str, evidence: dict[str, Any] | None = None,
               private: dict[str, Any] | None = None) -> int:
