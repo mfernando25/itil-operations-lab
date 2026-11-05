@@ -86,8 +86,18 @@ def test_student_events_are_limited_to_teacher_assigned_active_group(live_http):
     assert status == 200
     assert events["visible_group"] == 6
     assert {event["group_number"] for event in events["events"]} == {6}
+    status, profile = call_json(live_http, "/api/portal/student-profile")
+    assert status == 502
     call_json(live_http, "/api/instructor/public-group", "POST", {"group": 7})
+    status, profile = call_json(live_http, "/api/portal/student-profile")
+    assert status == 200
+    assert profile["status"] == "ok"
+    status, state = call_json(live_http, "/api/scenario-state")
+    assert state == {"visible_group": 7, "active": True}
     status, events = call_json(live_http, "/api/events")
     assert status == 200
     assert events["visible_group"] == 7
     assert {event["group_number"] for event in events["events"]} == {7}
+    status, enrollment = call_json(live_http, "/api/demo/enrollment")
+    assert status == 200
+    assert enrollment["consultation"]["status"] == "Pendiente"

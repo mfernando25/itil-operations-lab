@@ -32,7 +32,7 @@ Mantén abierta la ventana de PowerShell durante la sesión. Detén el servidor 
 | 2 | Fallo durante el workflow | GitHub Actions detiene la ejecución durante una validación de configuración, antes de iniciar tests. |
 | 3 | Sincronización Git | Se construye un repositorio local aislado con rama remota y local divergentes; el pull produce un conflicto reproducible. |
 | 4 | CPU anormal | Se generan diez muestras distribuidas en cinco días con CPU, solicitudes/minuto y latencia correlacionadas. |
-| 5 | Crecimiento de almacenamiento | Se generan cinco puntos de capacidad/espacio disponible y desglose de logs y respaldos en un volumen lógico de 10 GB. |
+| 5 | Crecimiento de almacenamiento | Se generan diez puntos de capacidad/espacio disponible y desglose de logs y respaldos en un volumen lógico de 10 GB. |
 | 6 | Incompatibilidad entre servicios | El proveedor cambia campos del contrato y el consumidor no puede completar el perfil. |
 | 7 | Información desactualizada | La escritura se confirma en el registro principal, mientras la caché conserva el estado anterior. |
 

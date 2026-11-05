@@ -19,7 +19,7 @@ jobs:
       - name: Validar configuración del servicio
         shell: bash
         env:
-          SERVICE_BASE_URL: ${{ vars.SERVICE_BASE_URL }}
+          SERVICE_BASE_URL: ""
           SERVICE_ENDPOINT: https://matricula.internal.invalid
         run: |
           set -o pipefail

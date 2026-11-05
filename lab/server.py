@@ -74,14 +74,20 @@ class LabHandler(BaseHTTPRequestHandler):
             )
             self._json(200, {"visible_group": visible_group, "events": visible_events})
         elif path == "/api/scenario-state":
-            self._json(200, database.scenario_states())
+            visible_group = database.get_public_group()
+            self._json(200, {
+                "visible_group": visible_group,
+                "active": bool(visible_group and database.is_scenario_active(visible_group)),
+            })
         elif path == "/api/services/students/STU-1042":
-            payload = services.students_service("STU-1042", database.is_scenario_active(6))
+            contract_mismatch = database.get_public_group() == 6 and database.is_scenario_active(6)
+            payload = services.students_service("STU-1042", contract_mismatch)
             self._json(200, payload)
         elif path == "/api/services/courses/CS-204":
             self._json(200, services.courses_service("CS-204"))
         elif path == "/api/portal/student-profile":
-            payload = services.students_service("STU-1042", database.is_scenario_active(6))
+            contract_mismatch = database.get_public_group() == 6 and database.is_scenario_active(6)
+            payload = services.students_service("STU-1042", contract_mismatch)
             # Consumer contract expects snake_case, provider can drift after an integration.
             if "student_id" not in payload or "course_id" not in payload:
                 self._json(502, {"status": "degraded", "message": "No fue posible completar la consulta del perfil."})
@@ -89,14 +95,22 @@ class LabHandler(BaseHTTPRequestHandler):
                 course = services.courses_service(payload["course_id"])
                 self._json(200, {"status": "ok", "student_id": payload["student_id"], "course": course, "name": payload["name"]})
         elif path == "/api/demo/student":
-            payload = services.students_service("STU-1042", database.is_scenario_active(6))
+            contract_mismatch = database.get_public_group() == 6 and database.is_scenario_active(6)
+            payload = services.students_service("STU-1042", contract_mismatch)
             if "student_id" not in payload:
                 self._json(200, {"status": "degraded", "message": "No fue posible completar la consulta del perfil."})
             else:
                 self._json(200, {"status": "ok", "student_id": payload["student_id"], "name": payload["name"]})
         elif path == "/api/demo/enrollment":
             current = database.get_enrollment("enrollment_current")
-            cached = database.get_enrollment("enrollment_cache")
+            if database.get_public_group() == 7 and database.is_scenario_active(7):
+                cached = database.get_enrollment("enrollment_cache")
+            else:
+                cached = {
+                    "student_code": current["student_code"],
+                    "enrollment_status": current["enrollment_status"],
+                    "cached_at": current["updated_at"],
+                }
             self._json(200, {
                 "operation": {"student_code": current["student_code"], "last_updated": current["updated_at"]},
                 "consultation": {"student_code": cached["student_code"], "status": cached["enrollment_status"], "cached_at": cached["cached_at"]},
@@ -140,13 +154,17 @@ class LabHandler(BaseHTTPRequestHandler):
             try:
                 group = int(path.split("/")[4])
                 result = scenarios.activate_scenario(group)
+                database.set_public_group(group)
                 self._json(200, {"ok": True, **result})
             except (ValueError, RuntimeError, IndexError) as exc:
                 self._json(400, {"ok": False, "error": str(exc)})
         elif path.startswith("/api/instructor/scenarios/") and path.endswith("/reset"):
             try:
                 group = int(path.split("/")[4])
-                self._json(200, {"ok": True, **scenarios.reset_scenario(group)})
+                result = scenarios.reset_scenario(group)
+                if database.get_public_group() == group:
+                    database.set_public_group(None)
+                self._json(200, {"ok": True, **result})
             except (ValueError, IndexError) as exc:
                 self._json(400, {"ok": False, "error": str(exc)})
         elif path == "/api/instructor/reset-all":
