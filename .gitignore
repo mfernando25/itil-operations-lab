@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+data/*.db
+data/*.db-shm
+data/*.db-wal
+lab_data/storage_test/*
+evidence/*.log
+evidence/*.txt
+.env
+
+evidence/*
+!evidence/.gitkeep

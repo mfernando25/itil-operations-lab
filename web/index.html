@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ITIL Operations Lab</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-mark">OPS</div>
+    <div>
+      <p class="eyebrow">CENTRO DE OPERACIONES TI</p>
+      <h1>ITIL Operations Lab</h1>
+    </div>
+    <span class="status-pill"><span class="pulse"></span> Laboratorio local</span>
+  </header>
+
+  <main class="layout">
+    <section class="intro panel">
+      <div>
+        <p class="eyebrow">PORTAL UNIVERSITARIO DE MATRÍCULA</p>
+        <h2>Estado del servicio</h2>
+        <p class="muted">Vista de monitoreo y registro de eventos del entorno de demostración.</p>
+      </div>
+      <div class="refresh-note">Actualización automática · cada 5 segundos</div>
+    </section>
+
+    <section class="metrics-grid" aria-label="Métricas del equipo">
+      <article class="metric-card">
+        <div class="metric-top"><span>CPU</span><span class="metric-dot blue"></span></div>
+        <div class="metric-value" id="cpu-value">--%</div>
+        <div class="metric-caption" id="cpu-note">Uso del procesador</div>
+        <div class="meter"><span id="cpu-meter"></span></div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-top"><span>Memoria</span><span class="metric-dot teal"></span></div>
+        <div class="metric-value" id="memory-value">--%</div>
+        <div class="metric-caption">Memoria utilizada</div>
+        <div class="meter"><span id="memory-meter"></span></div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-top"><span>Disco del equipo</span><span class="metric-dot purple"></span></div>
+        <div class="metric-value" id="disk-value">--%</div>
+        <div class="metric-caption">Ocupación de la unidad</div>
+        <div class="meter"><span id="disk-meter"></span></div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-top"><span>Datos de laboratorio</span><span class="metric-dot orange"></span></div>
+        <div class="metric-value" id="storage-value">-- MB</div>
+        <div class="metric-caption">Archivos de prueba controlados</div>
+        <div class="meter"><span id="storage-meter"></span></div>
+      </article>
+    </section>
+
+    <section class="panel chart-panel">
+      <div class="section-heading">
+        <div><p class="eyebrow">TENDENCIA</p><h2>Historial reciente de CPU</h2></div>
+        <span class="legend"><i class="legend-dot"></i> Real <i class="legend-dot simulated"></i> Simulado</span>
+      </div>
+      <div class="chart-wrap"><canvas id="history-chart" width="1100" height="240" aria-label="Historial de CPU"></canvas></div>
+      <p class="caption">Las mediciones simuladas se identifican por separado y no representan consumo real del equipo.</p>
+    </section>
+
+    <section class="panel scenario-panel">
+      <div class="section-heading">
+        <div><p class="eyebrow">CONTROL DEL LABORATORIO</p><h2>Escenarios locales</h2></div>
+        <span class="caption">Grupos 4–7</span>
+      </div>
+      <div class="scenario-grid">
+        <article class="scenario-card">
+          <div class="scenario-number">G4</div>
+          <h3>Consumo elevado de CPU</h3>
+          <p>Registra una alerta simulada de 94 % para analizar tendencia, riesgo e impacto.</p>
+          <div class="actions"><button data-activate="4">Activar</button><button class="secondary" data-reset="4">Reiniciar</button></div>
+        </article>
+        <article class="scenario-card">
+          <div class="scenario-number">G5</div>
+          <h3>Crecimiento de almacenamiento</h3>
+          <p>Genera cinco puntos históricos simulados y una alerta por crecimiento sostenido.</p>
+          <div class="actions"><button data-activate="5">Activar</button><button class="secondary" data-reset="5">Reiniciar</button></div>
+        </article>
+        <article class="scenario-card">
+          <div class="scenario-number">G6</div>
+          <h3>Incompatibilidad entre componentes</h3>
+          <p>Activa una diferencia de nombre de campo en la respuesta del servicio.</p>
+          <div class="actions"><button data-activate="6">Activar</button><button class="secondary" data-reset="6">Reiniciar</button></div>
+        </article>
+        <article class="scenario-card">
+          <div class="scenario-number">G7</div>
+          <h3>Información desactualizada</h3>
+          <p>Actualiza el registro principal y mantiene temporalmente la vista de consulta anterior.</p>
+          <div class="actions"><button data-activate="7">Activar</button><button class="secondary" data-reset="7">Reiniciar</button></div>
+        </article>
+      </div>
+      <div id="scenario-message" class="message" role="status"></div>
+    </section>
+
+    <section class="two-col">
+      <article class="panel">
+        <div class="section-heading"><div><p class="eyebrow">EVIDENCIA</p><h2>Eventos registrados</h2></div><button class="secondary small" id="refresh-events">Actualizar</button></div>
+        <div id="events-list" class="events-list"><p class="muted">Cargando eventos…</p></div>
+      </article>
+      <article class="panel demo-panel">
+        <p class="eyebrow">VALIDACIÓN FUNCIONAL</p>
+        <h2>Consultas de demostración</h2>
+        <p class="muted">Úsalas para observar el comportamiento después de activar G6 o G7.</p>
+        <button class="secondary full" id="check-contract">Consultar perfil del estudiante (G6)</button>
+        <pre id="contract-result" class="result-box">Sin consultar.</pre>
+        <button class="secondary full" id="check-enrollment">Consultar estado de matrícula (G7)</button>
+        <pre id="enrollment-result" class="result-box">Sin consultar.</pre>
+        <button id="reconcile-enrollment" class="full">Sincronizar vista de consulta</button>
+      </article>
+    </section>
+
+    <section class="panel workflow-panel">
+      <p class="eyebrow">GITHUB ACTIONS</p>
+      <h2>Escenarios remotos · Grupos 1 y 2</h2>
+      <div class="workflow-grid">
+        <div><strong>G1 · Pruebas fallidas</strong><p>En GitHub: Actions → “G1 - Fallo de pruebas” → Run workflow.</p></div>
+        <div><strong>G2 · Error de prevalidación</strong><p>En GitHub: Actions → “G2 - Fallo de prevalidación” → Run workflow.</p></div>
+      </div>
+      <p class="caption">El workflow normal de CI se ejecuta en cada push y pull request. Los dos escenarios se lanzan manualmente.</p>
+    </section>
+  </main>
+
+  <footer>ITIL Operations Lab · Datos locales · No utilizar con información real de estudiantes</footer>
+  <script src="/app.js"></script>
+</body>
+</html>
